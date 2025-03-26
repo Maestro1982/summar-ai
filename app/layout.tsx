@@ -6,6 +6,8 @@ import './globals.css';
 import Header from '@/components/common/header';
 import Footer from '@/components/common/footer';
 
+import { Toaster } from '@/components/ui/sonner';
+
 const fontSans = FontSans({
   variable: '--font-sans',
   subsets: ['latin'],
@@ -32,6 +34,7 @@ export default function RootLayout({
             <main className='flex-1'>{children}</main>
             <Footer />
           </div>
+          <Toaster richColors />
         </body>
       </html>
     </ClerkProvider>
