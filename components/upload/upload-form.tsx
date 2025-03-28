@@ -8,7 +8,10 @@ import UploadFormInput from '@/components/upload/upload-form-input';
 
 import { useUploadThing } from '@/utils/uploadthing';
 
-import { generatePdfSummary } from '@/app/actions/upload-actions';
+import {
+  generatePdfSummary,
+  storePdfSummaryAction,
+} from '@/app/actions/upload-actions';
 
 const schema = z.object({
   file: z
@@ -89,11 +92,23 @@ const UploadForm = () => {
       const { data = null, message = null } = result || {};
 
       if (data) {
+        let storeResult: any;
         toast.loading('📄 Saving PDF...', {
           description: 'Hang tight! We are saving your summary! ✨',
         });
-        formRef.current?.reset();
-        // if (data.summary) {}
+
+        if (data.summary) {
+          storeResult = await storePdfSummaryAction({
+            summary: data.summary,
+            fileUrl: res[0].serverData.file.url,
+            title: data.formattedFileName,
+            fileName: data.fileName,
+          });
+          toast.success('✨ Summary generated!', {
+            description: 'Your PDF has been successfully summarized and saved!',
+          });
+          formRef.current?.reset();
+        }
       }
     } catch (error) {
       setIsLoading(false);
