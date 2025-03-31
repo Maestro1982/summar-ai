@@ -1,6 +1,6 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 
 import { generateSummaryFromGemini } from '@/lib/geminiai';
 import { fetchAndExtractPdfText } from '@/lib/langchain';
@@ -109,8 +109,43 @@ export async function generatePdfSummary(
   }
 }
 
+async function getOrCreateUserUUID() {
+  const sql = await getDbConnection();
+
+  // Get the logged-in user's Clerk userId
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error('User not authenticated');
+  }
+
+  // Check if user already exists in the database
+  const existingUser = await sql`
+    SELECT id FROM users WHERE clerk_user_id = ${userId};
+  `;
+  if (existingUser.length > 0) {
+    return existingUser[0].id; // Return existing UUID
+  }
+
+  // ✅ Fetch user details (including email) from Clerk
+  const user = await currentUser();
+  if (!user) {
+    throw new Error('Failed to retrieve user data from Clerk');
+  }
+
+  const email = user?.emailAddresses?.[0]?.emailAddress || null; // Get primary email
+
+  // ✅ Insert new user into database with email
+  const newUser = await sql`
+    INSERT INTO users (clerk_user_id, email) 
+    VALUES (${userId}, ${email}) 
+    RETURNING id;
+  `;
+
+  return newUser[0].id; // Return new UUID
+}
+
 async function savePdfSummary({
-  userId,
+  userId, // This is Clerk's userId (string)
   fileUrl,
   summary,
   title,
@@ -118,15 +153,24 @@ async function savePdfSummary({
 }: PdfSummaryType) {
   try {
     const sql = await getDbConnection();
-    await sql`INSERT INTO pdf_summaries(user_id, original_file_url, summary_text, title, file_name) VALUES (
-      ${userId},
-      ${fileUrl},
-      ${summary},
-      ${title},
-      ${fileName}
-    )`;
+
+    // Get the corresponding UUID for Clerk's userId
+    if (!userId) {
+      throw new Error('User ID is undefined');
+    }
+    const uuidUserId = await getOrCreateUserUUID();
+
+    // Insert summary with the correct UUID
+    const result = await sql`
+      INSERT INTO pdf_summaries(user_id, original_file_url, summary_text, title, file_name) 
+      VALUES (${uuidUserId}, ${fileUrl}, ${summary}, ${title}, ${fileName}) 
+      RETURNING id;
+    `;
+
+    return result; // Return inserted summary ID
   } catch (error) {
-    console.error('Error saving PDF summary', error);
+    console.error('Error saving PDF summary:', error);
+    throw new Error('Database insertion failed');
   }
 }
 

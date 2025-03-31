@@ -102,7 +102,7 @@ const UploadForm = () => {
             summary: data.summary,
             fileUrl: res[0].serverData.file.url,
             title: data.formattedFileName,
-            fileName: data.fileName,
+            fileName: file.name,
           });
           toast.success('✨ Summary generated!', {
             description: 'Your PDF has been successfully summarized and saved!',
