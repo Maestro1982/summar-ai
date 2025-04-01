@@ -48,34 +48,50 @@ const Dashboard = async () => {
               </Link>
             </Button>
           </div>
-          {summaries.length >= uploadLimit && (
-            <div className='mb-6'>
-              <div className='bg-rose-50 border border-rose-200 rounded-lg p-4 text-rose-800'>
-                <p className='text-sm'>
-                  You have reached the limit of {uploadLimit} uploads on the
-                  Basic plan.{' '}
-                  <Link
-                    href='/#pricing'
-                    className='text-rose-800 font-medium underline underline-offset-4 inline-flex items-center'
-                  >
-                    Click here to upgrade to Pro{' '}
-                    <ArrowRight className='w-3 h-3 inline-block' />
-                  </Link>{' '}
-                  for unlimited uploads.
-                </p>
-              </div>
-            </div>
-          )}
-          <div className='grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 sm:px-0'>
-            {summaries.length > 0 ? (
-              summaries.map((summary) => (
-                <SummaryCard key={summary.id} summary={summary} />
-              ))
-            ) : (
-              <p className='text-gray-600'>
-                No summaries found. Start by uploading a document!
+          <div className='mb-6'>
+            <div className='bg-rose-50 border border-rose-200 rounded-lg p-4 text-rose-800'>
+              <p className='text-sm'>
+                You have reached the limit of {uploadLimit} uploads on the Basic
+                plan.{' '}
+                <Link
+                  href='/#pricing'
+                  className='text-rose-800 font-medium underline underline-offset-4 inline-flex items-center'
+                >
+                  Click here to upgrade to Pro{' '}
+                  <ArrowRight className='w-3 h-3 inline-block' />
+                </Link>{' '}
+                for unlimited uploads.
               </p>
+            </div>
+            {summaries.length >= uploadLimit && (
+              <div className='mb-6'>
+                <div className='bg-rose-50 border border-rose-200 rounded-lg p-4 text-rose-800'>
+                  <p className='text-sm'>
+                    You have reached the limit of {uploadLimit} uploads on the
+                    Basic plan.{' '}
+                    <Link
+                      href='/#pricing'
+                      className='text-rose-800 font-medium underline underline-offset-4 inline-flex items-center'
+                    >
+                      Click here to upgrade to Pro{' '}
+                      <ArrowRight className='w-3 h-3 inline-block' />
+                    </Link>{' '}
+                    for unlimited uploads.
+                  </p>
+                </div>
+              </div>
             )}
+            <div className='grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 sm:px-0 mt-2'>
+              {summaries.length > 0 ? (
+                summaries.map((summary) => (
+                  <SummaryCard key={summary.id} summary={summary} />
+                ))
+              ) : (
+                <p className='text-gray-600'>
+                  No summaries found. Start by uploading a document!
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
