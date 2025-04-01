@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import UploadFormInput from '@/components/upload/upload-form-input';
 
@@ -26,6 +27,7 @@ const schema = z.object({
 const UploadForm = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const router = useRouter();
 
   const { startUpload } = useUploadThing('pdfUploader', {
     onClientUploadComplete: () => {
@@ -108,12 +110,15 @@ const UploadForm = () => {
             description: 'Your PDF has been successfully summarized and saved!',
           });
           formRef.current?.reset();
+          router.push(`/summaries/${storeResult.data.id}`);
         }
       }
     } catch (error) {
       setIsLoading(false);
       console.error('Error occurred while submitting form:', error);
       formRef.current?.reset();
+    } finally {
+      setIsLoading(false);
     }
   };
 

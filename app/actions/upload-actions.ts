@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { auth, currentUser } from '@clerk/nextjs/server';
 
 import { generateSummaryFromGemini } from '@/lib/geminiai';
@@ -109,39 +110,55 @@ export async function generatePdfSummary(
   }
 }
 
-async function getOrCreateUserUUID() {
+export async function getOrCreateUserUUID(clerkUserId: string) {
   const sql = await getDbConnection();
 
-  // Get the logged-in user's Clerk userId
-  const { userId } = await auth();
-  if (!userId) {
+  if (!clerkUserId) {
     throw new Error('User not authenticated');
   }
 
-  // Check if user already exists in the database
+  // 🔥 Try fetching the user first
   const existingUser = await sql`
-    SELECT id FROM users WHERE clerk_user_id = ${userId};
+    SELECT id FROM users WHERE clerk_user_id = ${clerkUserId};
   `;
+
   if (existingUser.length > 0) {
-    return existingUser[0].id; // Return existing UUID
+    return existingUser[0].id; // ✅ Return the stored UUID
   }
 
-  // ✅ Fetch user details (including email) from Clerk
+  // 🔥 Fetch Clerk user details
   const user = await currentUser();
   if (!user) {
     throw new Error('Failed to retrieve user data from Clerk');
   }
 
-  const email = user?.emailAddresses?.[0]?.emailAddress || null; // Get primary email
+  const email = user?.emailAddresses?.[0]?.emailAddress || null;
 
-  // ✅ Insert new user into database with email
-  const newUser = await sql`
-    INSERT INTO users (clerk_user_id, email) 
-    VALUES (${userId}, ${email}) 
-    RETURNING id;
-  `;
+  try {
+    // Insert user into DB if not exists, handling email conflicts
+    const newUser = await sql`
+      INSERT INTO users (clerk_user_id, email) 
+      VALUES (${clerkUserId}, ${email}) 
+      ON CONFLICT (email) DO NOTHING -- ✅ Prevents duplicate email errors
+      RETURNING id;
+    `;
 
-  return newUser[0].id; // Return new UUID
+    if (newUser.length === 0) {
+      // If insert failed, fetch the existing user by email
+      const existingEmailUser = await sql`
+        SELECT id FROM users WHERE email = ${email};
+      `;
+      if (existingEmailUser.length > 0) {
+        return existingEmailUser[0].id; // ✅ Return existing user UUID
+      }
+      throw new Error('User exists but could not be retrieved');
+    }
+
+    return newUser[0].id; // ✅ Return UUID for use in `pdf_summaries`
+  } catch (error) {
+    console.error('Database error:', error);
+    throw new Error('Failed to insert or retrieve user');
+  }
 }
 
 async function savePdfSummary({
@@ -158,7 +175,7 @@ async function savePdfSummary({
     if (!userId) {
       throw new Error('User ID is undefined');
     }
-    const uuidUserId = await getOrCreateUserUUID();
+    const uuidUserId = await getOrCreateUserUUID(userId);
 
     // Insert summary with the correct UUID
     const result = await sql`
@@ -202,11 +219,6 @@ export async function storePdfSummaryAction({
         message: 'Failed to save PDF summary, please try again',
       };
     }
-
-    return {
-      success: true,
-      message: 'PDF summary saved successfully',
-    };
   } catch (error) {
     return {
       success: false,
@@ -214,4 +226,15 @@ export async function storePdfSummaryAction({
         error instanceof Error ? error.message : 'Error saving PDF summary',
     };
   }
+
+  // Revalidate our cache
+  revalidatePath(`/summaries/${saveResult.id}`);
+
+  return {
+    success: true,
+    message: 'PDF summary saved successfully',
+    data: {
+      id: saveResult.id,
+    },
+  };
 }
