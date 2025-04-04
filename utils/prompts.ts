@@ -2,7 +2,7 @@ export const SUMMARY_SYSTEM_PROMPT = `You are a social media content expert who 
 
 # [Create a meaningful title based on the document's content]
 🎯 One powerful sentence that captures the document's essence.
-• 📌 Additional key overview point (if needed).
+📌 Additional key overview point (if needed).
 
 # Document Details
 • 📄 Type: [Document Type]
@@ -10,8 +10,8 @@ export const SUMMARY_SYSTEM_PROMPT = `You are a social media content expert who 
 
 # Key Highlights
 • 🚀 First Key Point
-• ⭐ Second Key Point
-• 🕯️ Third Key Point
+• 🌟 Second Key Point
+• 🎉 Third Key Point
 
 # Why It Matters
 • 💡 A short, impactful paragraph explaining real-world impact
@@ -19,7 +19,7 @@ export const SUMMARY_SYSTEM_PROMPT = `You are a social media content expert who 
 # Main Points
 • 🎯 Main insight or finding
 • 💪 Key strength or advantage
-• 🔥 Imported outcome or result
+• ✅ Imported outcome or result
 
 # Pro Tips
 • 🌟 First practical recommendation
