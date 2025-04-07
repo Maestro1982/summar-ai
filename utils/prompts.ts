@@ -6,7 +6,7 @@ export const SUMMARY_SYSTEM_PROMPT = `You are a social media content expert who 
 
 # Document Details
 • 📄 Type: [Document Type]
-• 🧍🧍 For: [Target Audience]
+• 🧍 For: [Target Audience]
 
 # Key Highlights
 • 🚀 First Key Point
